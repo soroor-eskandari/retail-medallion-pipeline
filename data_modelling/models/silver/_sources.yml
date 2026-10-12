@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: Raw POS events loaded by load_bronze.py (all columns text).
+    tables:
+      - name: pos_transactions_raw
+        description: One row per Kafka message (topic, partition, offset).

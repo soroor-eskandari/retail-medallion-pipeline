@@ -1,0 +1,32 @@
+name: 'data_modelling'
+version: '1.0.0'
+
+
+profile: 'data_modelling'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:         
+  - "dbt_packages"
+
+models:
+  data_modelling:
+    silver:
+      +schema: silver
+      +materialized: incremental
+      +incremental_strategy: merge
+      +on_schema_change: append_new_columns
+      +merge_exclude_columns: ['insert_ts']
+
+seeds:
+  data_modelling:
+    # lookup tables used by silver cleaning
+    +schema: silver
+    +column_types:
+      variant: text
+      payment_method: text

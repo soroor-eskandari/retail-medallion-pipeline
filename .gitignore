@@ -1,0 +1,5 @@
+*.csv
+*.ipynb
+.env
+.venv/
+__pycache__/

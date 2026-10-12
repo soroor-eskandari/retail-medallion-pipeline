@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: silver_store
+    description: One row per store; attributes are the most frequent cleaned value across its events.
+    columns:
+      - name: store_id
+        data_tests: [unique, not_null]
+      - name: store_name
+        data_tests: [not_null]
+      - name: banner
+        data_tests: [not_null]
+      - name: city
+        data_tests: [not_null]
+      - name: postal_code
+        data_tests: [not_null]
+      - name: insert_ts
+        description: When the row was first inserted into silver; never updated.
+        data_tests: [not_null]
+
+  - name: silver_product
+    description: One row per product (EAN); attributes are the most frequent cleaned value across its events.
+    columns:
+      - name: product_ean
+        data_tests: [unique, not_null]
+      - name: product_name
+        data_tests: [not_null]
+      - name: vat_rate
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [7, 19]
+                quote: false
+      - name: unit
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['kg', 'piece']
+      - name: insert_ts
+        data_tests: [not_null]
+
+  - name: silver_receipt
+    description: One row per receipt; receipt-level fields are the most frequent value across its lines.
+    columns:
+      - name: receipt_id
+        data_tests: [unique, not_null]
+      - name: store_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_store')
+                field: store_id
+      - name: payment_method
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['girocard', 'cash', 'credit_card', 'mobile']
+      - name: receipt_time
+        data_tests: [not_null]
+      - name: insert_ts
+        data_tests: [not_null]
+
+  - name: silver_receipt_line
+    description: One row per receipt line (one deduplicated POS event).
+    data_tests:
+      - unique:
+          arguments:
+            column_name: "receipt_id || '-' || line_number"
+    columns:
+      - name: receipt_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_receipt')
+                field: receipt_id
+      - name: line_number
+        data_tests: [not_null]
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: event_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['SALE', 'RETURN', 'VOID']
+      - name: event_time
+        data_tests: [not_null]
+      - name: product_ean
+        description: NULL when the source EAN was broken and couldn't be repaired.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('silver_product')
+                field: product_ean
+      - name: insert_ts
+        data_tests: [not_null]
